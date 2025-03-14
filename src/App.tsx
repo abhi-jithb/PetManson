@@ -11,7 +11,7 @@ import UserProfile from './components/UserProfile';
 import Forum from './components/Forum';
 import { Heart, BookmarkCheck, RotateCcw, BookOpen, Users, MessageSquare, User, Loader } from 'lucide-react';
 import useUserStore from './store/userStore';
-
+import Footer from './components/Footer';
 // Updated Loading component directly in App.tsx
 const Loading = () => {
   return (
@@ -207,6 +207,7 @@ function App() {
 
         {renderContent()}
       </div>
+      <Footer/>
     </div>
   );
 }
@@ -297,5 +298,7 @@ function calculateMatchScore(pet: Pet, preferences: UserPreferences): number {
 
   return Math.round((score / totalFactors) * 100);
 }
+
+
 
 export default App;
