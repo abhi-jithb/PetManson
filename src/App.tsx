@@ -9,63 +9,27 @@ import AdoptionStories from './components/AdoptionStories';
 import PetCareResources from './components/PetCareResources';
 import UserProfile from './components/UserProfile';
 import Forum from './components/Forum';
-import { Heart, BookmarkCheck, RotateCcw, BookOpen, Users, MessageSquare, User } from 'lucide-react';
+import { Heart, BookmarkCheck, RotateCcw, BookOpen, Users, MessageSquare, User, Loader } from 'lucide-react';
 import useUserStore from './store/userStore';
 
-function calculateMatchScore(pet: Pet, preferences: UserPreferences): number {
-  let score = 0;
-  let totalFactors = 0;
-
-  // Pet type match
-  if (preferences.petType.includes(pet.type)) {
-    score += 20;
-  }
-  totalFactors += 20;
-
-  // Living space compatibility
-  const spaceMap = {
-    apartment: ['apartment'],
-    house: ['apartment', 'house'],
-    'large-yard': ['apartment', 'house', 'large-yard'],
-  };
-  if (spaceMap[preferences.livingSpace as keyof typeof spaceMap]?.includes(pet.spaceRequired)) {
-    score += 20;
-  }
-  totalFactors += 20;
-
-  // Experience level match
-  const experienceLevels = ['beginner', 'intermediate', 'advanced'];
-  const userExpIndex = experienceLevels.indexOf(preferences.experienceLevel);
-  const petExpIndex = experienceLevels.indexOf(pet.experienceNeeded);
-  if (userExpIndex >= petExpIndex) {
-    score += 20;
-  }
-  totalFactors += 20;
-
-  // Energy level match
-  if (preferences.energyPreference === pet.energyLevel) {
-    score += 20;
-  }
-  totalFactors += 20;
-
-  // Children and other pets compatibility
-  if (preferences.hasChildren && pet.goodWith.includes('children')) {
-    score += 10;
-  }
-  if (preferences.hasOtherPets && (pet.goodWith.includes('dogs') || pet.goodWith.includes('cats'))) {
-    score += 10;
-  }
-  totalFactors += 20;
-
-  // Personality match
-  const personalityMatches = pet.personality.filter(trait => 
-    preferences.personalityPreference.includes(trait)
-  ).length;
-  score += (personalityMatches / pet.personality.length) * 20;
-  totalFactors += 20;
-
-  return Math.round((score / totalFactors) * 100);
-}
+// Updated Loading component directly in App.tsx
+const Loading = () => {
+  return (
+    <div className="flex flex-col items-center justify-center h-64">
+      <div className="mb-4 animate-spin">
+        <Loader className="w-12 h-12 text-blue-500" />
+      </div>
+      <p className="text-lg text-gray-600">Finding your perfect pet match...</p>
+      <div className="mt-8 max-w-md">
+        <img 
+          src=".logo.png" 
+          alt="Pets waiting to be matched" 
+          className="rounded-lg shadow-md opacity-75"
+        />
+      </div>
+    </div>
+  );
+};
 
 type View = 'quiz' | 'matches' | 'saved' | 'stories' | 'resources' | 'profile' | 'forum';
 
@@ -75,6 +39,7 @@ function App() {
   const [currentView, setCurrentView] = useState<View>('quiz');
   const [feedbackHistory, setFeedbackHistory] = useState<MatchFeedback[]>([]);
   const { isAuthenticated, login } = useUserStore();
+  const [loading, setLoading] = useState(false); // Add loading state
 
   useEffect(() => {
     const saved = localStorage.getItem('savedMatches');
@@ -88,18 +53,23 @@ function App() {
   }, [savedMatches]);
 
   const handleSubmit = (preferences: UserPreferences) => {
+    setLoading(true); // Show loading
     localStorage.setItem('userPreferences', JSON.stringify(preferences));
-
-    const matchedPets = pets
-      .map(pet => ({
-        pet,
-        score: calculateMatchScore(pet, preferences)
-      }))
-      .sort((a, b) => b.score - a.score);
-
-    setMatches(matchedPets);
-    setCurrentView('matches');
+  
+    setTimeout(() => { // Simulating a fetch delay
+      const matchedPets = pets
+        .map(pet => ({
+          pet,
+          score: calculateMatchScore(pet, preferences)
+        }))
+        .sort((a, b) => b.score - a.score);
+  
+      setMatches(matchedPets);
+      setCurrentView('matches');
+      setLoading(false); // Hide loading
+    }, 2000); // Simulate API delay
   };
+  
 
   const handleFeedback = (feedback: MatchFeedback) => {
     setFeedbackHistory(prev => [...prev, feedback]);
@@ -120,6 +90,8 @@ function App() {
   };
 
   const renderContent = () => {
+    if (loading) return <Loading />; // Show loading when fetching data
+  
     switch (currentView) {
       case 'quiz':
         return <QuestionnaireForm onSubmit={handleSubmit} />;
@@ -128,15 +100,13 @@ function App() {
         return (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setCurrentView('quiz')}
-                  className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-800"
-                >
-                  <RotateCcw className="w-5 h-5" />
-                  Start Over
-                </button>
-              </div>
+              <button
+                onClick={() => setCurrentView('quiz')}
+                className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-800"
+              >
+                <RotateCcw className="w-5 h-5" />
+                Start Over
+              </button>
               <h2 className="text-2xl font-semibold">
                 {currentView === 'saved' ? 'Saved Matches' : 'Your Matches'}
               </h2>
@@ -172,6 +142,7 @@ function App() {
         return null;
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -179,10 +150,10 @@ function App() {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2">
             <Heart className="w-8 h-8 text-red-500" />
-            Pet Match AI
+            Pet Manson
           </h1>
           <p className="text-lg text-gray-600 mb-6">
-            Find your perfect pet companion based on your lifestyle and preferences
+              "Every Paw Deserves a Home"
           </p>
           <div className="flex justify-center gap-4">
             <NavButton
@@ -240,6 +211,7 @@ function App() {
   );
 }
 
+
 interface NavButtonProps {
   icon: React.ReactNode;
   label: string;
@@ -269,6 +241,61 @@ function NavButton({ icon, label, isActive, onClick, badge }: NavButtonProps) {
       )}
     </button>
   );
+}
+
+function calculateMatchScore(pet: Pet, preferences: UserPreferences): number {
+  let score = 0;
+  let totalFactors = 0;
+
+  // Pet type match
+  if (preferences.petType.includes(pet.type)) {
+    score += 20;
+  }
+  totalFactors += 20;
+
+  // Living space compatibility
+  const spaceMap = {
+    apartment: ['apartment'],
+    house: ['apartment', 'house'],
+    'large-yard': ['apartment', 'house', 'large-yard'],
+  };
+  if (spaceMap[preferences.livingSpace as keyof typeof spaceMap]?.includes(pet.spaceRequired)) {
+    score += 20;
+  }
+  totalFactors += 20;
+
+  // Experience level match
+  const experienceLevels = ['beginner', 'intermediate', 'advanced'];
+  const userExpIndex = experienceLevels.indexOf(preferences.experienceLevel);
+  const petExpIndex = experienceLevels.indexOf(pet.experienceNeeded);
+  if (userExpIndex >= petExpIndex) {
+    score += 20;
+  }
+  totalFactors += 20;
+
+  // Energy level match
+  if (preferences.energyPreference === pet.energyLevel) {
+    score += 20;
+  }
+  totalFactors += 20;
+
+  // Children and other pets compatibility
+  if (preferences.hasChildren && pet.goodWith.includes('children')) {
+    score += 10;
+  }
+  if (preferences.hasOtherPets && (pet.goodWith.includes('dogs') || pet.goodWith.includes('cats'))) {
+    score += 10;
+  }
+  totalFactors += 20;
+
+  // Personality match
+  const personalityMatches = pet.personality.filter(trait => 
+    preferences.personalityPreference.includes(trait)
+  ).length;
+  score += (personalityMatches / pet.personality.length) * 20;
+  totalFactors += 20;
+
+  return Math.round((score / totalFactors) * 100);
 }
 
 export default App;

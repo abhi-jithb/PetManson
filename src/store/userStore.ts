@@ -7,7 +7,7 @@ interface UserState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   updateProfile: (updates: Partial<User>) => void;
-  addBadge: (badge: Badge) => void;
+  addBadge: (badge: Badge) => void;      
   savePetMatch: (match: SavedMatch) => void;
   addAdoptedPet: (pet: Pet) => void;
   likeStory: (storyId: string) => void;
